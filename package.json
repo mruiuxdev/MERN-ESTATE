@@ -1,0 +1,29 @@
+{
+  "name": "mern-estate",
+  "version": "1.0.0",
+  "description": "MERN Estate using Nodejs, Reactjs (Vite), TailwindCSS, MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon api/index",
+    "start": "node api/index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mruiuxdev/MERN-ESTATE.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/mruiuxdev/MERN-ESTATE/issues"
+  },
+  "homepage": "https://github.com/mruiuxdev/MERN-ESTATE#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
