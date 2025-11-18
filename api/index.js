@@ -1,5 +1,6 @@
 import express from "express";
 import { configDotenv } from "dotenv";
+import cors from "cors";
 import connectDB from "./utils/db.js";
 import authRouter from "./routes/auth.router.js";
 import userRouter from "./routes/user.route.js";
@@ -14,6 +15,8 @@ if (!port) {
 connectDB();
 
 const app = express();
+
+app.use(cors({ origin: `${process.env.CLIENT_URL}` }));
 app.use(express.json());
 
 app.use("/api/auth", authRouter);
