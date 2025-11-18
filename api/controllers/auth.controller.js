@@ -1,7 +1,9 @@
 import bcryptjs from "bcryptjs";
 import User from "../models/user.model.js";
+import { normalizedTrim, normalizedTrimLowerCase } from "../utils/normalize.js";
+import { errorHandler } from "../utils/error.js";
 
-export const signUp = async (req, res) => {
+export const signUp = async (req, res, next) => {
   const { username, email, password } = req.body || {};
 
   if (!username || !email || !password) {
@@ -11,10 +13,11 @@ export const signUp = async (req, res) => {
   }
 
   try {
-    const normalizedEmail = String(email).trim().toLowerCase();
-
     const existing = await User.findOne({
-      $or: [{ email: normalizedEmail }, { username: String(username).trim() }],
+      $or: [
+        { email: normalizedTrimLowerCase(email) },
+        { username: normalizedTrim(username) },
+      ],
     });
 
     if (existing) {
@@ -26,8 +29,8 @@ export const signUp = async (req, res) => {
     const hashedPassword = await bcryptjs.hash(password, 10);
 
     const newUser = new User({
-      username: String(username).trim(),
-      email: normalizedEmail,
+      username: normalizedTrim(username),
+      email: normalizedTrimLowerCase(email),
       password: hashedPassword,
     });
 
@@ -44,6 +47,6 @@ export const signUp = async (req, res) => {
     });
   } catch (error) {
     console.error("signUp error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(errorHandler(500, "Error function sign up"));
   }
 };
