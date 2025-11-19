@@ -2,14 +2,13 @@ import bcryptjs from "bcryptjs";
 import User from "../models/user.model.js";
 import { normalizedTrim, normalizedTrimLowerCase } from "../utils/normalize.js";
 import { errorHandler } from "../utils/error.js";
+import jwt from "jsonwebtoken";
 
 export const signUp = async (req, res, next) => {
   const { username, email, password } = req.body || {};
 
   if (!username || !email || !password) {
-    return res
-      .status(400)
-      .json({ error: "username, email and password are required" });
+    return next(errorHandler(400, "username, email and password are required"));
   }
 
   try {
@@ -21,9 +20,9 @@ export const signUp = async (req, res, next) => {
     });
 
     if (existing) {
-      return res
-        .status(409)
-        .json({ error: "User with given email or username already exists" });
+      return next(
+        errorHandler(409, "User with given email or username already exists")
+      );
     }
 
     const hashedPassword = await bcryptjs.hash(password, 10);
@@ -46,7 +45,40 @@ export const signUp = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error("signUp error:", error);
+    console.error("Sign Up error:", error);
     next(errorHandler(500, "Error function sign up"));
+  }
+};
+
+export const signIn = async (req, res, next) => {
+  const { email, password } = req.body || {};
+
+  if (!email || !password) {
+    return next(errorHandler(400, "email and password are required"));
+  }
+
+  try {
+    const existing = await User.findOne({
+      email: normalizedTrimLowerCase(email),
+    });
+    if (!existing) {
+      return next(errorHandler(400, "User not found"));
+    }
+
+    const matchedPassword = bcryptjs.compareSync(password, existing.password);
+    if (!matchedPassword) {
+      return next(errorHandler(401, "Invalid credential"));
+    }
+
+    const token = jwt.sign({ id: existing._id }, process.env.JWT_SECRET);
+    const { password: pass, ...rest } = existing._doc;
+
+    res
+      .cookie("access_token", token, { httpOnly: true })
+      .status(200)
+      .json(rest);
+  } catch (error) {
+    console.error("Sign In error:", error);
+    next(errorHandler(500, "Error function sign in"));
   }
 };
