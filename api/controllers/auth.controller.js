@@ -11,12 +11,12 @@ export const signUp = async (req, res, next) => {
     return next(errorHandler(400, "username, email and password are required"));
   }
 
+  const cleanEmail = normalizedTrimLowerCase(email);
+  const cleanUsername = normalizedTrim(username);
+
   try {
     const existing = await User.findOne({
-      $or: [
-        { email: normalizedTrimLowerCase(email) },
-        { username: normalizedTrim(username) },
-      ],
+      $or: [{ email: cleanEmail }, { username: cleanUsername }],
     });
 
     if (existing) {
@@ -28,8 +28,8 @@ export const signUp = async (req, res, next) => {
     const hashedPassword = await bcryptjs.hash(password, 10);
 
     const newUser = new User({
-      username: normalizedTrim(username),
-      email: normalizedTrimLowerCase(email),
+      username: cleanUsername,
+      email: cleanEmail,
       password: hashedPassword,
     });
 
@@ -57,26 +57,41 @@ export const signIn = async (req, res, next) => {
     return next(errorHandler(400, "email and password are required"));
   }
 
+  const cleanEmail = normalizedTrimLowerCase(email);
+
   try {
-    const existing = await User.findOne({
-      email: normalizedTrimLowerCase(email),
-    });
+    const existing = await User.findOne({ email: cleanEmail });
     if (!existing) {
-      return next(errorHandler(400, "User not found"));
+      await bcryptjs.compare(
+        password,
+        "$2a$10$invalidsaltinvalidsaltinv.u7uZHiogX9UO"
+      );
+      return next(errorHandler(400, "Invalid credentials"));
     }
 
-    const matchedPassword = bcryptjs.compareSync(password, existing.password);
+    const matchedPassword = await bcryptjs.compare(password, existing.password);
     if (!matchedPassword) {
-      return next(errorHandler(401, "Invalid credential"));
+      return next(errorHandler(401, "Invalid credentials"));
     }
 
-    const token = jwt.sign({ id: existing._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: existing._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
     const { password: pass, ...rest } = existing._doc;
 
-    res
-      .cookie("access_token", token, { httpOnly: true })
+    return res
+      .cookie("access_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
       .status(200)
-      .json(rest);
+      .json({
+        message: "Logged in successfully",
+        user: rest,
+      });
   } catch (error) {
     console.error("Sign In error:", error);
     next(errorHandler(500, "Error function sign in"));
