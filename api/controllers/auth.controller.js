@@ -81,12 +81,7 @@ export const signIn = async (req, res, next) => {
     const { password: pass, ...rest } = existing._doc;
 
     return res
-      .cookie("access_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      })
+      .cookie("access_token", token, { httpOnly: true })
       .status(200)
       .json({
         message: "Logged in successfully",

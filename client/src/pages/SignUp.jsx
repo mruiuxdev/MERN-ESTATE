@@ -26,7 +26,7 @@ export default function SingUp() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(data?.error || "Sign up failed");
+        throw new Error(data?.message || "Sign up failed");
       }
 
       setFormData({});
@@ -60,7 +60,7 @@ export default function SingUp() {
         </div>
       )}
       <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xl border p-4">
-        <legend className="fieldset-legend text-3xl">Login</legend>
+        <legend className="fieldset-legend text-3xl">Sign Up</legend>
 
         <form onSubmit={onSubmit}>
           <label className="label">Username</label>
