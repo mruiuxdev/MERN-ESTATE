@@ -1,11 +1,17 @@
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  signInFailure,
+  signInSuccess,
+  singInStart,
+} from "../redux/user/userSlice";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({});
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.user);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -13,8 +19,7 @@ export default function SignIn() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    dispatch(singInStart());
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/sign-in`, {
@@ -26,16 +31,15 @@ export default function SignIn() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
+        dispatch(signInFailure(data?.message || "Sign in failed"));
         throw new Error(data?.message || "Sign in failed");
       }
 
       setFormData({});
-
+      dispatch(signInSuccess(data));
       navigate("/");
     } catch (err) {
-      setError(err?.error ?? String(err));
-    } finally {
-      setLoading(false);
+      dispatch(signInFailure(err?.error ?? String(err)));
     }
   };
 
