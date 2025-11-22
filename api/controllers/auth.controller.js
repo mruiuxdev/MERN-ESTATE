@@ -61,6 +61,7 @@ export const signIn = async (req, res, next) => {
 
   try {
     const existing = await User.findOne({ email: cleanEmail });
+
     if (!existing) {
       await bcryptjs.compare(
         password,
@@ -81,12 +82,14 @@ export const signIn = async (req, res, next) => {
     const { password: pass, ...rest } = existing._doc;
 
     return res
-      .cookie("access_token", token, { httpOnly: true })
+      .cookie("access_token", token, {
+        httpOnly: true,
+        // secure: process.env.NODE_ENV === "production",
+        // sameSite: "strict",
+        // maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
       .status(200)
-      .json({
-        message: "Logged in successfully",
-        user: rest,
-      });
+      .json({ message: "Logged in successfully", user: rest });
   } catch (error) {
     console.error("Sign In error:", error);
     next(errorHandler(500, "Error function sign in"));
@@ -94,9 +97,71 @@ export const signIn = async (req, res, next) => {
 };
 
 export const google = async (req, res, next) => {
+  const { email, name, photo } = req.body || {};
+
+  if (!email) {
+    return next(errorHandler(400, "Email is required"));
+  }
+
+  const cleanEmail = normalizedTrimLowerCase(email);
+
   try {
+    let user = await User.findOne({ email: cleanEmail });
+
+    if (user) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      const { password, ...rest } = user._doc;
+
+      return res
+        .cookie("access_token", token, {
+          httpOnly: true,
+          // secure: process.env.NODE_ENV === "production",
+          // sameSite: "strict",
+          // maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
+        .status(200)
+        .json({ message: "Logged in successfully", user: rest });
+    }
+
+    const randomPassword =
+      Math.random().toString(36).slice(-8) +
+      Math.random().toString(36).slice(-8);
+
+    const hashedPassword = await bcryptjs.hash(randomPassword, 10);
+
+    const generatedUsername =
+      (name ? name.split(" ").join("").toLowerCase() : "user") +
+      Math.random().toString(36).slice(-4);
+
+    user = new User({
+      username: normalizedTrim(generatedUsername),
+      email: cleanEmail,
+      password: hashedPassword,
+      avatar: photo || null,
+    });
+
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    const { password, ...rest } = user._doc;
+
+    return res
+      .cookie("access_token", token, {
+        httpOnly: true,
+        // secure: process.env.NODE_ENV === "production",
+        // sameSite: "strict",
+        // maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json({ message: "Logged in successfully", user: rest });
   } catch (error) {
-    console.error("Sign In error:", error);
-    next(errorHandler(500, "Error function sign in with google"));
+    console.error("Google Sign In error:", error);
+    next(errorHandler(500, "Error function sign in with Google"));
   }
 };

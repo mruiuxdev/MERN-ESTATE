@@ -6,10 +6,12 @@ import {
   signInSuccess,
   singInStart,
 } from "../redux/user/userSlice";
+import { useNavigate } from "react-router-dom";
 
 export default function OAuth() {
   const dispatch = useDispatch();
   const { error, loading } = useSelector((state) => state.user);
+  const navigate = useNavigate();
 
   const handleGoogle = async () => {
     try {
@@ -18,7 +20,7 @@ export default function OAuth() {
       const auth = getAuth(app);
       const resAut = await signInWithPopup(auth, provider);
 
-      const res = await fetch(`${import.meta.VITE_API_URL}/auth/google`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,6 +34,7 @@ export default function OAuth() {
       const data = await res.json();
 
       dispatch(signInSuccess(data));
+      navigate("/");
     } catch (err) {
       dispatch(signInFailure(err?.error ?? String(err)));
       console.log("Could not sign in with google", error);

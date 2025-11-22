@@ -16,6 +16,11 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    avatar: {
+      type: String,
+      default:
+        "https://thumbs.dreamstime.com/b/faceless-male-avatar-hoodie-illustration-minimalist-default-photo-placeholder-wearing-light-gray-background-ideal-377566416.jpg",
+    },
   },
   { timestamps: true }
 );
