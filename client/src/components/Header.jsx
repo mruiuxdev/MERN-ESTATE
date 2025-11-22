@@ -1,6 +1,9 @@
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 export default function Header() {
+  const { currentUser } = useSelector((state) => state.user);
+
   return (
     <div className="navbar bg-base-100 shadow-sm fixed z-50 top-0 left-0 w-full">
       <div className="navbar-start">
@@ -62,9 +65,36 @@ export default function Header() {
           </svg>
           <input type="search" required placeholder="Search" />
         </label>
-        <Link to="/sign-in" className="btn btn-primary">
-          Sign In
-        </Link>
+        {currentUser?.user ? (
+          <div className="dropdown dropdown-end">
+            <div
+              tabIndex={0}
+              role="button"
+              className="btn p-0 rounded-full m-1"
+            >
+              <img
+                src={currentUser.user.avatar}
+                alt={currentUser.user.username}
+                className="w-10 rounded-full"
+              />
+            </div>
+            <ul
+              tabIndex="-1"
+              className="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-lg"
+            >
+              <li>
+                <a>Item 1</a>
+              </li>
+              <li>
+                <a>Item 2</a>
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <Link to="/sign-in" className="btn btn-primary">
+            Sign In
+          </Link>
+        )}
       </div>
     </div>
   );
