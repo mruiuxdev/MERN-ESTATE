@@ -92,3 +92,11 @@ export const signIn = async (req, res, next) => {
     next(errorHandler(500, "Error function sign in"));
   }
 };
+
+export const google = async (req, res, next) => {
+  try {
+  } catch (error) {
+    console.error("Sign In error:", error);
+    next(errorHandler(500, "Error function sign in with google"));
+  }
+};
